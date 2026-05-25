@@ -12,5 +12,41 @@
     <header class="header">
       <h1 class="header__title">Pixel Paint</h1>
     </header>
+
+    <main class="main">
+      <div class="controls">
+        <div class="controls__group">
+          <div class="controls__group--color">
+            <input type="color" id="paint-color" class="controls__input--color" value="#333333">
+            <label for="paint-color">Paint Color</label>
+          </div>
+
+          <div class="controls__group--color">
+            <input type="color" id="canvas-color" class="controls__input--color" value="#ffffff">
+            <label for="canvas-color">Canvas Color</label>
+          </div>
+        </div>
+
+        <div class="controls__group controls__group--grid-size">
+          <label for="grid-size">Grid Size: 16 x 16</label>
+          <input type="range" id="grid-size" class="controls__input--grid-size" value="16">
+        </div>
+
+        <div class="controls__group">
+          <button class="controls__btn controls__btn--custom-color">Custom Color</button>
+          <button class="controls__btn controls__btn--random-color">Random Color</button>
+        </div>
+
+        <div class="controls__group">
+          <button class="controls__btn controls__btn--eraser">Eraser</button>
+          <button class="controls__btn controls__btn--clear">Clear</button>
+        </div>
+
+        <div class="controls__group">
+          <button class="controls__btn controls__btn--save">Save</button>
+          <button class="controls__btn controls__btn--gridlines">Gridlines</button>
+        </div>
+      </div>
+    </main>
   </body>
 </html>
