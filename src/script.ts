@@ -103,6 +103,7 @@ function paint(e: PointerEvent) {
 
   const col = Math.floor(x / cellSize);
   const row = Math.floor(y / cellSize);
+  if (col < 0 || col >= state.gridSize || row < 0 || row >= state.gridSize) return;
 
   const cell = row * state.gridSize + col;
   if (cell === state.painted) return;
