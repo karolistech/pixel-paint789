@@ -5,10 +5,12 @@ const canvasColorInput = document.querySelector<HTMLInputElement>("#canvas-color
 const paintColorInput = document.querySelector<HTMLInputElement>("#paint-color")!;
 const gridSizeLabel = document.querySelector<HTMLLabelElement>("label[for='grid-size']")!;
 const gridSizeInput = document.querySelector<HTMLInputElement>("#grid-size")!;
-
 const customColorBtn = document.querySelector<HTMLButtonElement>(".controls__btn--custom-color")!;
 const randomColorBtn = document.querySelector<HTMLButtonElement>(".controls__btn--random-color")!;
 const eraserBtn = document.querySelector<HTMLButtonElement>(".controls__btn--eraser")!;
+const clearBtn = document.querySelector<HTMLButtonElement>(".controls__btn--clear")!;
+const saveBtn = document.querySelector<HTMLButtonElement>(".controls__btn--save")!;
+const gridlinesBtn = document.querySelector<HTMLButtonElement>(".controls__btn--gridlines")!;
 
 const gridSizes = [8, 16, 32, 48, 64] as const;
 
@@ -17,34 +19,51 @@ type PaintMode = "custom-color" | "random-color" | "eraser";
 const state = {
   gridSize: gridSizes[gridSizeInput.valueAsNumber],
   canvasSize: 576,
-  canvasColor: "#fff",
+  canvasColor: canvasColorInput.value,
+  gridlines: true,
   gridlinesColor: "#aaa",
   paintMode: "custom-color" as PaintMode,
   paintColor: paintColorInput.value,
-  painted: null as string | null
+  painted: null as number | null,
+  cells: new Map<number, string>()
 };
 
-function drawCanvas() {
+function renderCanvas() {
   const cellSize = state.canvasSize / state.gridSize;
-
-  canvas.width = state.canvasSize + 1;
-  canvas.height = state.canvasSize + 1;
 
   ctx.fillStyle = state.canvasColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = state.gridlinesColor;
+  for (const [cell, color] of state.cells) {
+    const col = cell % state.gridSize;
+    const row = Math.floor(cell / state.gridSize);
 
-  for (let i = 0; i <= state.gridSize; i++) {
-    const p = i * cellSize;
+    ctx.fillStyle = color;
+    ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+  }
 
-    ctx.fillRect(p, 0, 1, canvas.height);
-    ctx.fillRect(0, p, canvas.width, 1);
+  if (state.gridlines === true) {
+    ctx.beginPath();
+
+    for (let i = 0; i <= state.gridSize; i++) {
+      const p = i * cellSize;
+
+      ctx.moveTo(p, 0);
+      ctx.lineTo(p, canvas.height);
+
+      ctx.moveTo(0, p);
+      ctx.lineTo(canvas.width, p);
+    }
+
+    ctx.strokeStyle = state.gridlinesColor;
+    ctx.stroke();
   }
 }
 
 function updateCanvasColor() {
   state.canvasColor = canvasColorInput.value;
+
+  renderCanvas();
 }
 
 function updatePaintColor() {
@@ -59,12 +78,17 @@ function updateGridSizeLabel() {
 
 function updateGridSize() {
   state.gridSize = gridSizes[gridSizeInput.valueAsNumber];
+  state.cells.clear();
 
-  drawCanvas();
+  renderCanvas();
 }
 
 function setPaintMode(mode: PaintMode) {
   state.paintMode = mode;
+
+  customColorBtn.classList.toggle("controls__btn--selected", state.paintMode === "custom-color");
+  randomColorBtn.classList.toggle("controls__btn--selected", state.paintMode === "random-color");
+  eraserBtn.classList.toggle("controls__btn--selected", state.paintMode === "eraser");
 }
 
 function paint(e: PointerEvent) {
@@ -72,37 +96,31 @@ function paint(e: PointerEvent) {
 
   const rect = canvas.getBoundingClientRect();
   const scale = canvas.width / rect.width;
+  const cellSize = state.canvasSize / state.gridSize;
 
   const x = (e.clientX - rect.left) * scale;
   const y = (e.clientY - rect.top) * scale;
 
-  const cellSize = state.canvasSize / state.gridSize;
-
   const col = Math.floor(x / cellSize);
   const row = Math.floor(y / cellSize);
 
-  const cell = `${col}-${row}`;
+  const cell = row * state.gridSize + col;
   if (cell === state.painted) return;
 
   state.painted = cell;
 
-  const drawX = col * cellSize + 1;
-  const drawY = row * cellSize + 1;
-
-  const fillSize = cellSize - 1;
-
   switch (state.paintMode) {
     case "custom-color":
-      ctx.fillStyle = state.paintColor;
+      state.cells.set(cell, state.paintColor);
       break;
     case "random-color":
-      ctx.fillStyle = getRandomColor();
+      state.cells.set(cell, getRandomColor());
       break;
     case "eraser":
-      ctx.fillStyle = state.canvasColor;
+      state.cells.delete(cell);
   }
 
-  ctx.fillRect(drawX, drawY, fillSize, fillSize);
+  renderCanvas();
 }
 
 function resetPainted() {
@@ -114,6 +132,27 @@ function getRandomColor(): string {
   const hexCode = `#${randomNumber.toString(16).padStart(6, "0")}`;
 
   return hexCode;
+}
+
+function clear() {
+  state.cells.clear();
+
+  renderCanvas();
+}
+
+function save() {
+  const link = document.createElement("a");
+
+  link.href = canvas.toDataURL("image/png");
+  link.download = "pixel-art.png";
+  link.click();
+}
+
+function toggleGridlines() {
+  state.gridlines = !state.gridlines;
+
+  gridlinesBtn.classList.toggle("controls__btn--selected", state.gridlines === true);
+  renderCanvas();
 }
 
 function setupEvents() {
@@ -130,10 +169,16 @@ function setupEvents() {
   customColorBtn.addEventListener("click", () => setPaintMode("custom-color"));
   randomColorBtn.addEventListener("click", () => setPaintMode("random-color"));
   eraserBtn.addEventListener("click", () => setPaintMode("eraser"));
+  clearBtn.addEventListener("click", clear);
+  saveBtn.addEventListener("click", save);
+  gridlinesBtn.addEventListener("click", toggleGridlines);
 }
 
 function init() {
-  drawCanvas();
+  canvas.width = state.canvasSize;
+  canvas.height = state.canvasSize;
+
+  renderCanvas();
   setupEvents();
 }
 
