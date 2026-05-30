@@ -17,15 +17,15 @@ const gridSizes = [8, 16, 32, 48, 64] as const;
 type PaintMode = "custom-color" | "random-color" | "eraser";
 
 const state = {
-  gridSize: gridSizes[gridSizeInput.valueAsNumber],
   canvasSize: 576,
   canvasColor: canvasColorInput.value,
+  gridSize: gridSizes[gridSizeInput.valueAsNumber],
   gridlines: true,
   gridlinesColor: "#aaa",
   paintMode: "custom-color" as PaintMode,
   paintColor: paintColorInput.value,
-  painted: null as number | null,
-  cells: new Map<number, string>()
+  paintedCells: new Map<number, string>(),
+  lastPaintedCellIndex: null as number | null
 };
 
 function renderCanvas() {
@@ -34,9 +34,9 @@ function renderCanvas() {
   ctx.fillStyle = state.canvasColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  for (const [cell, color] of state.cells) {
-    const col = cell % state.gridSize;
-    const row = Math.floor(cell / state.gridSize);
+  for (const [cellIndex, color] of state.paintedCells) {
+    const col = cellIndex % state.gridSize;
+    const row = Math.floor(cellIndex / state.gridSize);
 
     ctx.fillStyle = color;
     ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
@@ -46,13 +46,13 @@ function renderCanvas() {
     ctx.beginPath();
 
     for (let i = 0; i <= state.gridSize; i++) {
-      const p = i * cellSize;
+      const pos = i * cellSize;
 
-      ctx.moveTo(p, 0);
-      ctx.lineTo(p, canvas.height);
+      ctx.moveTo(pos, 0);
+      ctx.lineTo(pos, canvas.height);
 
-      ctx.moveTo(0, p);
-      ctx.lineTo(canvas.width, p);
+      ctx.moveTo(0, pos);
+      ctx.lineTo(canvas.width, pos);
     }
 
     ctx.strokeStyle = state.gridlinesColor;
@@ -78,7 +78,7 @@ function updateGridSizeLabel() {
 
 function updateGridSize() {
   state.gridSize = gridSizes[gridSizeInput.valueAsNumber];
-  state.cells.clear();
+  state.paintedCells.clear();
 
   renderCanvas();
 }
@@ -91,11 +91,11 @@ function setPaintMode(mode: PaintMode) {
   eraserBtn.classList.toggle("controls__btn--selected", state.paintMode === "eraser");
 }
 
-function paint(e: PointerEvent) {
+function handleCanvasInput(e: PointerEvent) {
   if (e.buttons !== 1) return;
 
   const rect = canvas.getBoundingClientRect();
-  const scale = canvas.width / rect.width;
+  const scale = state.canvasSize / rect.width;
   const cellSize = state.canvasSize / state.gridSize;
 
   const x = (e.clientX - rect.left) * scale;
@@ -105,27 +105,27 @@ function paint(e: PointerEvent) {
   const row = Math.floor(y / cellSize);
   if (col < 0 || col >= state.gridSize || row < 0 || row >= state.gridSize) return;
 
-  const cell = row * state.gridSize + col;
-  if (cell === state.painted) return;
+  const cellIndex = row * state.gridSize + col;
+  if (cellIndex === state.lastPaintedCellIndex) return;
 
-  state.painted = cell;
+  state.lastPaintedCellIndex = cellIndex;
 
   switch (state.paintMode) {
     case "custom-color":
-      state.cells.set(cell, state.paintColor);
+      state.paintedCells.set(cellIndex, state.paintColor);
       break;
     case "random-color":
-      state.cells.set(cell, getRandomColor());
+      state.paintedCells.set(cellIndex, getRandomColor());
       break;
     case "eraser":
-      state.cells.delete(cell);
+      state.paintedCells.delete(cellIndex);
   }
 
   renderCanvas();
 }
 
-function resetPainted() {
-  state.painted = null;
+function resetLastPaintedCellIndex() {
+  state.lastPaintedCellIndex = null;
 }
 
 function getRandomColor(): string {
@@ -136,7 +136,7 @@ function getRandomColor(): string {
 }
 
 function clear() {
-  state.cells.clear();
+  state.paintedCells.clear();
 
   renderCanvas();
 }
@@ -157,10 +157,10 @@ function toggleGridlines() {
 }
 
 function setupEvents() {
-  canvas.addEventListener("pointerdown", paint);
-  canvas.addEventListener("pointermove", paint);
-  canvas.addEventListener("pointerup", resetPainted);
-  canvas.addEventListener("pointerleave", resetPainted);
+  canvas.addEventListener("pointerdown", handleCanvasInput);
+  canvas.addEventListener("pointermove", handleCanvasInput);
+  canvas.addEventListener("pointerup", resetLastPaintedCellIndex);
+  canvas.addEventListener("pointerleave", resetLastPaintedCellIndex);
 
   canvasColorInput.addEventListener("input", updateCanvasColor);
   paintColorInput.addEventListener("input", updatePaintColor);
