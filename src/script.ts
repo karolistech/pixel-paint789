@@ -4,6 +4,8 @@ const ctx = canvas.getContext("2d")!;
 const paintColorInput = document.querySelector<HTMLInputElement>("#paint-color")!;
 const gridSizeLabel = document.querySelector<HTMLLabelElement>("label[for='grid-size']")!;
 const gridSizeInput = document.querySelector<HTMLInputElement>("#grid-size")!;
+const customColorBtn = document.querySelector<HTMLButtonElement>(".controls__btn--custom-color")!;
+const randomColorBtn = document.querySelector<HTMLButtonElement>(".controls__btn--random-color")!;
 
 const gridSizes = [8, 16, 32, 48, 64] as const;
 
@@ -17,6 +19,7 @@ const state = {
   paintMode: "custom-color" as PaintMode,
   paintColor: paintColorInput.value,
   paintedCells: new Map<number, string>(),
+  lastPaintedCellIndex: null as number | null
 };
 
 function renderCanvas() {
@@ -64,6 +67,10 @@ function updateGridSize(e: Event) {
   }
 }
 
+function setPaintMode(mode: PaintMode) {
+  state.paintMode = mode;
+}
+
 function handleCanvasInput(e: PointerEvent) {
   if (e.buttons !== 1) return;
 
@@ -78,22 +85,45 @@ function handleCanvasInput(e: PointerEvent) {
   const row = Math.floor(y / cellSize);
 
   const cellIndex = row * state.gridSize + col;
+  if (cellIndex === state.lastPaintedCellIndex) return;
+
+  state.lastPaintedCellIndex = cellIndex;
 
   switch (state.paintMode) {
     case "custom-color":
       state.paintedCells.set(cellIndex, state.paintColor);
+      break;
+    case "random-color":
+      state.paintedCells.set(cellIndex, getRandomColor());
       break;
   }
 
   renderCanvas();
 }
 
+function getRandomColor() {
+  const randomNumber = Math.floor(Math.random() * 0xffffff);
+  const hexCode = `#${randomNumber.toString(16).padStart(6, "0")}`;
+
+  return hexCode;
+}
+
+function resetPaintTracking() {
+  state.lastPaintedCellIndex = null;
+}
+
 function setupEvents() {
   canvas.addEventListener("pointerdown", handleCanvasInput);
   canvas.addEventListener("pointermove", handleCanvasInput);
+  canvas.addEventListener("pointerup", resetPaintTracking);
+  canvas.addEventListener("pointerleave", resetPaintTracking);
+
   paintColorInput.addEventListener("input", updatePaintColor);
   gridSizeInput.addEventListener("input", updateGridSize);
   gridSizeInput.addEventListener("change", updateGridSize);
+
+  customColorBtn.addEventListener("click", () => setPaintMode("custom-color"));
+  randomColorBtn.addEventListener("click", () => setPaintMode("random-color"));
 }
 
 function init() {
