@@ -6,6 +6,7 @@ const gridSizeLabel = document.querySelector<HTMLLabelElement>("label[for='grid-
 const gridSizeInput = document.querySelector<HTMLInputElement>("#grid-size")!;
 const customColorBtn = document.querySelector<HTMLButtonElement>(".controls__btn--custom-color")!;
 const randomColorBtn = document.querySelector<HTMLButtonElement>(".controls__btn--random-color")!;
+const eraserBtn = document.querySelector<HTMLButtonElement>(".controls__btn--eraser")!;
 
 const gridSizes = [8, 16, 32, 48, 64] as const;
 
@@ -83,6 +84,7 @@ function handleCanvasInput(e: PointerEvent) {
 
   const col = Math.floor(x / cellSize);
   const row = Math.floor(y / cellSize);
+  if (col < 0 || col >= state.gridSize || row < 0 || row >= state.gridSize) return;
 
   const cellIndex = row * state.gridSize + col;
   if (cellIndex === state.lastPaintedCellIndex) return;
@@ -96,6 +98,8 @@ function handleCanvasInput(e: PointerEvent) {
     case "random-color":
       state.paintedCells.set(cellIndex, getRandomColor());
       break;
+    case "eraser":
+      state.paintedCells.delete(cellIndex);
   }
 
   renderCanvas();
@@ -124,6 +128,7 @@ function setupEvents() {
 
   customColorBtn.addEventListener("click", () => setPaintMode("custom-color"));
   randomColorBtn.addEventListener("click", () => setPaintMode("random-color"));
+  eraserBtn.addEventListener("click", () => setPaintMode("eraser"));
 }
 
 function init() {
