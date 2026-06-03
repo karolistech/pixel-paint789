@@ -8,6 +8,7 @@ const gridSizeInput = document.querySelector<HTMLInputElement>("#grid-size")!;
 const customColorBtn = document.querySelector<HTMLButtonElement>(".controls__btn--custom-color")!;
 const randomColorBtn = document.querySelector<HTMLButtonElement>(".controls__btn--random-color")!;
 const eraserBtn = document.querySelector<HTMLButtonElement>(".controls__btn--eraser")!;
+const gridlinesBtn = document.querySelector<HTMLButtonElement>(".controls__btn--gridlines")!;
 
 const gridSizes = [8, 16, 32, 48, 64] as const;
 
@@ -17,6 +18,7 @@ const state = {
   canvasSize: 576,
   canvasColor: canvasColorInput.value,
   gridSize: gridSizes[gridSizeInput.valueAsNumber],
+  gridlines: true,
   gridlinesColor: "#aaa",
   paintMode: "custom-color" as PaintMode,
   paintColor: paintColorInput.value,
@@ -38,20 +40,22 @@ function renderCanvas() {
     ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
   }
 
-  ctx.beginPath();
+  if (state.gridlines === true) {
+    ctx.beginPath();
 
-  for (let i = 0; i <= state.gridSize; i++) {
-    const pos = i * cellSize;
+    for (let i = 0; i <= state.gridSize; i++) {
+      const pos = i * cellSize;
 
-    ctx.moveTo(pos, 0);
-    ctx.lineTo(pos, canvas.height);
+      ctx.moveTo(pos, 0);
+      ctx.lineTo(pos, canvas.height);
 
-    ctx.moveTo(0, pos);
-    ctx.lineTo(canvas.width, pos);
+      ctx.moveTo(0, pos);
+      ctx.lineTo(canvas.width, pos);
+    }
+
+    ctx.strokeStyle = state.gridlinesColor;
+    ctx.stroke();
   }
-
-  ctx.strokeStyle = state.gridlinesColor;
-  ctx.stroke();
 }
 
 function updateCanvasColor() {
@@ -127,6 +131,13 @@ function resetPaintTracking() {
   state.lastPaintedCellIndex = null;
 }
 
+function toggleGridlines() {
+  state.gridlines = !state.gridlines;
+
+  gridlinesBtn.classList.toggle("controls__btn--selected", state.gridlines === true);
+  renderCanvas();
+}
+
 function setupEvents() {
   canvas.addEventListener("pointerdown", handleCanvasInput);
   canvas.addEventListener("pointermove", handleCanvasInput);
@@ -141,6 +152,7 @@ function setupEvents() {
   customColorBtn.addEventListener("click", () => setPaintMode("custom-color"));
   randomColorBtn.addEventListener("click", () => setPaintMode("random-color"));
   eraserBtn.addEventListener("click", () => setPaintMode("eraser"));
+  gridlinesBtn.addEventListener("click", toggleGridlines);
 }
 
 function init() {
