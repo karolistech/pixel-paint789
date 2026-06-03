@@ -1,6 +1,7 @@
 const canvas = document.querySelector<HTMLCanvasElement>(".canvas")!;
 const ctx = canvas.getContext("2d")!;
 
+const canvasColorInput = document.querySelector<HTMLInputElement>("#canvas-color")!;
 const paintColorInput = document.querySelector<HTMLInputElement>("#paint-color")!;
 const gridSizeLabel = document.querySelector<HTMLLabelElement>("label[for='grid-size']")!;
 const gridSizeInput = document.querySelector<HTMLInputElement>("#grid-size")!;
@@ -14,7 +15,7 @@ type PaintMode = "custom-color" | "random-color" | "eraser";
 
 const state = {
   canvasSize: 576,
-  canvasColor: "#fff",
+  canvasColor: canvasColorInput.value,
   gridSize: gridSizes[gridSizeInput.valueAsNumber],
   gridlinesColor: "#aaa",
   paintMode: "custom-color" as PaintMode,
@@ -51,6 +52,12 @@ function renderCanvas() {
 
   ctx.strokeStyle = state.gridlinesColor;
   ctx.stroke();
+}
+
+function updateCanvasColor() {
+  state.canvasColor = canvasColorInput.value;
+
+  renderCanvas();
 }
 
 function updatePaintColor() {
@@ -126,6 +133,7 @@ function setupEvents() {
   canvas.addEventListener("pointerup", resetPaintTracking);
   canvas.addEventListener("pointerleave", resetPaintTracking);
 
+  canvasColorInput.addEventListener("input", updateCanvasColor);
   paintColorInput.addEventListener("input", updatePaintColor);
   gridSizeInput.addEventListener("input", updateGridSize);
   gridSizeInput.addEventListener("change", updateGridSize);
