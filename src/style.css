@@ -48,6 +48,7 @@ body {
 .controls__group--grid-size {
   flex-direction: column;
   align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .controls__input--color {
@@ -68,6 +69,30 @@ body {
 
 .controls__input--color::-webkit-color-swatch-wrapper {
   padding: 0;
+}
+
+.controls__input--grid-size {
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border: 1px solid #aaa;
+  cursor: pointer;
+}
+
+.controls__input--grid-size::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background-color: #444;
+}
+
+.controls__input--grid-size::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #444;
 }
 
 .controls__btn {
